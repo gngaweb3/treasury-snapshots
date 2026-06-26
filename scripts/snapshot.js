@@ -19,7 +19,6 @@ const VTOKEN_ABI = [
 ];
 
 async function main() {
-  // 1. Precios CoinGecko
   const ids = "pax-gold,quant-network,chainlink,polygon-ecosystem-token,ripple,hyperliquid";
   const prices = await fetch(
     "https://api.coingecko.com/api/v3/simple/price?ids=" + ids + "&vs_currencies=usd"
@@ -34,13 +33,11 @@ async function main() {
     hype: prices["hyperliquid"]?.usd || 0,
   };
 
-  // 2. Providers
   const ethProvider  = new ethers.providers.JsonRpcProvider(ETH_RPC);
   const polProvider  = new ethers.providers.JsonRpcProvider(POL_RPC);
   const bnbProvider  = new ethers.providers.JsonRpcProvider(BNB_RPC);
   const hypeProvider = new ethers.providers.JsonRpcProvider(HYPE_RPC);
 
-  // 3. Balances on-chain
   const paxgContract  = new ethers.Contract("0x45804880De22913dAFE09f4980848ECE6EcbAf78", ERC20_ABI, ethProvider);
   const qntContract   = new ethers.Contract("0x4a220E6096B25EADb88358cb44068A3248254675", ERC20_ABI, ethProvider);
   const linkContract  = new ethers.Contract("0x53E0bca35eC356BD5ddDFebbD1Fc0fD03FaBad39", ERC20_ABI, polProvider);
@@ -72,11 +69,9 @@ async function main() {
   const hype  = parseFloat(ethers.utils.formatUnits(hypeRaw,  18));
   const stpol = parseFloat(ethers.utils.formatUnits(stpolRaw, 18));
 
-  // Venus vXRP — igual que tu dashboard, usando BigNumber de ethers
   const productoBN = vxrpBalRaw.mul(vxrpRateRaw);
   const vxrp = parseFloat(ethers.utils.formatUnits(productoBN, 36));
 
-  // 4. Totales
   const base_assets_usd =
     (paxg  * p.paxg) +
     (qnt   * p.qnt)  +
@@ -95,13 +90,12 @@ async function main() {
   console.log("Yield USD:", yield_usd);
   console.log("Total USD:", treasury_total_usd);
 
-  // 5. Guardar en Supabase
   const res = await fetch(process.env.SUPABASE_URL + "/rest/v1/treasury_snapshots", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "apikey": process.env.SUPABASE_ANON_KEY,
-      "Authorization": "Bearer " + process.env.SUPABASE_ANON_KEY,
+      "apikey": process.env.SUPABASE_SERVICE_KEY,
+      "Authorization": "Bearer " + process.env.SUPABASE_SERVICE_KEY,
       "Prefer": "return=minimal"
     },
     body: JSON.stringify({ treasury_total_usd, base_assets_usd, yield_usd })
